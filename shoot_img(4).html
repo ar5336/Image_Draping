@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
+    />
+    <meta name="description" content="Use Viewer to start building new applications or easily embed Cesium into existing applications.">
+    <meta name="cesium-sandcastle-labels" content="Beginner, Showcases">
+    <title>Cesium Demo</title>
+    <script type="text/javascript" src="../Sandcastle-header.js"></script>
+    <script
+      type="text/javascript"
+      src="../CesiumUnminified/Cesium.js"
+      
+    ></script>
+
+  </head>
+  <body
+    class="sandcastle-loading"
+    data-sandcastle-bucket="bucket-requirejs.html"
+  >
+<style>
+  @import url(../templates/bucket.css);
+  
+  #progBar {
+    display: none;
+    width: 33%;
+  }
+  
+  .prevBtn, .nextBtn {
+    background-color: #151515;
+  }
+  
+  .prevBtn {
+    float: left;
+  }
+  
+  .nextBtn {
+    float: right;
+  }
+  
+  .fullBtn {
+    width: 98%;
+  }
+  
+  #menuOptions {
+    width: 33%;
+  }
+  
+  #returnBtn {
+    background-color: #101010;
+    display: none;
+  }
+  
+  .subMenu {
+    display: none;
+  }
+  
+  .infoPanel {
+    margin-left: 5px;
+    width: 200px;
+    text-align: center;
+  }
+  
+  #appearanceOptions {
+    background: rgba(42, 42, 42, 0.8);
+    padding: 4px;
+    border-radius: 4px;
+  }
+</style>
+<div id="cesiumContainer" class="fullSize"></div>
+<div id="loadingOverlay"><h1>Loading...</h1></div>
+<div id="toolbar">
+  
+  <div id="menuOptions">
+    <button
+            class="cesium-button centerBtn fullBtn" 
+            value=2 
+            data-bind="click: switchMenu"
+            >Change Mode</button>   
+    <button
+            class="cesium-button centerBtn fullBtn" 
+            value=1 
+            data-bind="click: switchMenu"
+            >Change View</button>
+    <button
+            class="cesium-button centerBtn fullBtn" 
+            value=3 
+            data-bind="click: switchMenu"
+            >Adjust Appearance</button>
+    <button
+            class="cesium-button centerBtn fullBtn"
+            data-bind="click: restart"
+            >Clear All</button>
+  </div>
+  
+  <div>
+    <button 
+            class="cesium-button centerBtn fullBtn"
+            id="returnBtn" 
+            value=0 
+            data-bind="click: switchMenu"
+            >&lt;&lt;&lt; Main Menu</button>
+  </div>
+  
+  <div class="subMenu" id="modeOptions">
+    <div 
+         class="infoPanel"
+         data-bind="
+                    text: modeOptions[currMode][1]
+                    ">
+    </div>
+    <select class="cesium-button setupBtn" 
+            data-bind="
+                     options: Object.keys(modeOptions), 
+                     optionsText: function(item) {return modeOptions[item][0]},
+                     value: currMode
+                     "></select>
+  </div>
+  
+  <div class="subMenu" id="viewOptions">    
+    <div>
+      <button 
+              class="cesium-button centerBtn fullBtn"
+              value=3
+              data-bind="
+                       click: updateView,
+                       text: viewOptions[3]
+                       "
+              ></button>
+    </div>
+    
+    <div>
+      <button 
+              class="cesium-button centerBtn fullBtn"
+              value=0
+              data-bind="
+                       click: updateView,
+                       text: viewOptions[0]
+                       "
+              ></button>
+    </div>
+
+    <div>
+      <button 
+              class="cesium-button prevBtn"
+              value=-1
+              data-bind="click: scrollFp, enable: currView === 1"
+              >&lt;</button>
+      <button 
+              class="cesium-button centerBtn"
+              value=1
+              data-bind="
+                       click: updateView,
+                       text: viewOptions[1]
+                       "
+              ></button>
+      <button 
+              class="cesium-button nextBtn"
+              value=1
+              data-bind="click: scrollFp, enable: currView === 1"
+              >&gt;</button>
+    </div>
+
+    <div>
+      <button 
+              class="cesium-button prevBtn"
+              value=-1
+              data-bind="click: scrollFp, enable: currView === 2"
+              >&lt;</button>
+      <button 
+              class="cesium-button centerBtn"
+              value=2
+              data-bind="
+                       click: updateView,
+                       text: viewOptions[2]
+                       "
+              ></button>
+      <button 
+              class="cesium-button nextBtn"
+              value=1
+              data-bind="click: scrollFp, enable: currView === 2"
+              >&gt;</button>
+    </div>
+    
+    <div>
+      <button 
+              class="cesium-button prevBtn"
+              value=-1
+              data-bind="click: scrollTgt, enable: currView === 4"
+              >&lt;</button>
+      <button 
+              class="cesium-button centerBtn"
+              value=4
+              data-bind="
+                       click: updateView,
+                       text: viewOptions[4]
+                       "
+              ></button>
+      <button 
+              class="cesium-button nextBtn"
+              value=1
+              data-bind="click: scrollTgt, enable: currView === 4"
+              >&gt;</button>
+    </div>
+    
+    <div>
+      <button 
+              class="cesium-button prevBtn"
+              value=-1
+              data-bind="click: scrollTgt, enable: currView === 5"
+              >&lt;</button>
+      <button 
+              class="cesium-button centerBtn"
+              value=5
+              data-bind="
+                       click: updateView,
+                       text: viewOptions[5]
+                       "
+              ></button>
+      <button 
+              class="cesium-button nextBtn"
+              value=1
+              data-bind="click: scrollTgt, enable: currView === 5"
+              >&gt;</button>
+    </div>
+  </div>
+  
+  <div class="subMenu" id="appearanceOptions">
+    <table>
+        <tbody>
+          <tr>
+            <td>Grid Alpha</td>
+            <td>
+              <input type="range" min="0.0" max="1.0" step="0.01" 
+               data-bind="value: gridAlpha">
+              <input type="text" size="5" data-bind="value: gridAlpha">
+            </td>
+          </tr>
+          <tr>
+            <td>Sensor Alpha</td>
+            <td>
+              <input type="range" min="0.0" max="1.0" step="0.01" 
+               data-bind="value: sensorAlpha">
+              <input type="text" size="5" data-bind="value: sensorAlpha">
+            </td>
+          </tr>
+          <tr>
+            <td>Ground Alpha</td>
+            <td>
+              <input type="range" min="0.0" max="1.0" step="0.01" 
+               data-bind="value: groundAlpha">
+              <input type="text" size="5" data-bind="value: groundAlpha">
+            </td>
+          </tr>
+          <tr>
+            <td>Target Alpha</td>
+            <td>
+              <input type="range" min="0.0" max="1.0" step="0.01" 
+               data-bind="value: targetAlpha">
+              <input type="text" size="5" data-bind="value: targetAlpha">
+            </td>
+          </tr>
+          <tr>
+            <td>Sky Alpha</td>
+            <td>
+              <input type="range" min="0.0" max="1.0" step="0.01" 
+               data-bind="value: skyAlpha">
+              <input type="text" size="5" data-bind="value: skyAlpha">
+            </td>
+          </tr>
+        </tbody>
+    </table>
+  </div>
+
+  <div>
+    <progress id="progBar" value="0" max="100"></progress>
+  </div>
+  
+</div>
+
+<canvas id="canvas" width="300" height="300"></canvas><script id="cesium_sandcastle_script">
+function startup(Cesium) {
+    'use strict';
+//Sandcastle_Begin
+/*************************
+
+Setup
+
+*************************/
+
+// Grant CesiumJS access to your ion assets
+Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwYTBhZDEwNS1i" +
+  "YTJiLTQ4MTEtYWE0Yy1iYWI2ZTY5ZTI4Y2EiLCJpZCI6Mjc2OTMsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1" +
+  "ODk5MjEwNzN9.OBa5RQyGlPD9SmgXatqoDkRxKGoDpRqZFjtLl5x7aww";
+
+// Used to start the program
+function init() {
+  var promise = Cesium.IonResource.fromAssetId(119255)
+    .then(function (resource) {
+      return Cesium.CzmlDataSource.load(resource);
+    })
+    .then(function (dataSource) {
+      return viewer.dataSources.add(dataSource);
+    })
+    .otherwise(function (error) {
+      console.log(error);
+    });
+  
+  make_base();
+  updateView(3);
+  return promise;
+}
+
+/** Some constants **/
+
+var SQUARE_OR_SCAN = true;
+// SQUARE
+const WIDTH = 20;
+const HEIGHT = 20;
+const W_ANGLE = 0.03;
+const H_ANGLE = 0.03;
+const MAX_DIST = 600;
+// SCAN
+const SLICES = 40;
+const ANGLES = 30;
+const MAX_ANGLE = 0.03;
+const EPS = SQUARE_OR_SCAN ?
+      (  // entities per square scan
+        (6 * WIDTH * HEIGHT) - 
+        (2 * WIDTH) - 
+        (2* HEIGHT) + 
+        1
+      ) :
+      (  // entities per regular scan
+        SLICES * ANGLES * 3
+      );
+
+const START = new Cesium.Cartesian3(
+  -2417933.2304999614,
+  -4451226.516415089,
+  3880168.2475686693
+);
+const END = new Cesium.Cartesian3(
+  -2420225.3330073925,
+  -4476883.387918171,
+  3849305.61609882
+);
+const SENSOR_DIR = new Cesium.Cartesian3(
+  -0.37922340775434044, 
+  0.20052137039001555, 
+  -0.20453239502782633
+);
+
+const CAM_POS = new Cesium.Cartesian3(
+  -2387591.7639267715, 
+  -4476620.441406089, 
+  3878030.509201494
+);
+const CAM_DIR = new Cesium.Cartesian3(
+  -0.8603912187852529, 
+  0.36706790637830433, 
+  -0.3535365649325052
+);
+const CAM_UP = new Cesium.Cartesian3(
+  -0.5090103568630473, 
+  -0.6532566887904222, 
+  0.560503483625862
+);
+const CAM_HD = Cesium.Math.toRadians(-110.0);
+const CAM_PITCH = Cesium.Math.toRadians(-15.0);
+const PI = Cesium.Math.PI;
+
+/** Global Variables **/
+
+var clock = new Cesium.Clock({
+  startTime: Cesium.JulianDate.fromIso8601("2020-06-30T16:00:00"),
+  currentTime: Cesium.JulianDate.fromIso8601("2020-06-30T16:00:00"),
+  stopTime: Cesium.JulianDate.fromIso8601("2020-06-30T16:00:60"),
+  clockRange: Cesium.ClockRange.LOOP_STOP, // loop when we hit the end time
+  clockStep: Cesium.ClockStep.SYSTEM_CLOCK_MULTIPLIER,
+  multiplier: 0, // how much time to advance each tick
+  shouldAnimate: true, // Animation on by default
+});
+
+var viewer = new Cesium.Viewer("cesiumContainer", {
+  terrainProvider: Cesium.createWorldTerrain(),
+  clockViewModel: new Cesium.ClockViewModel(clock),
+});
+
+var globePick = new Cesium.Cartesian3();
+var viewerCenter = new Cesium.Cartesian2(
+  viewer.container.clientWidth / 2, 
+  viewer.container.clientHeight / 2
+);
+var camUpdate = new Cesium.CallbackProperty(function(time, result){
+  if (currMode === 2) {
+    var camRay = viewer.scene.camera.getPickRay(viewerCenter);
+    globePick = viewer.scene.globe.pick(camRay, viewer.scene);
+    return globePick;
+  }
+}, false);
+var camPointer = viewer.entities.add({
+  position: camUpdate,
+  point: {
+    pixelSize: 10,
+  },
+  show: true,
+});
+
+var alphaOptions = {
+  grid: 0.25,
+  sensor: 0.05,
+  ground: 1.0,
+  target: 1.0,
+  sky: 1.0
+};
+var gridColor = new Cesium.CallbackProperty(function(time, result) {
+  return Cesium.Color.WHITE.withAlpha(alphaOptions.grid);
+}, false);
+var sensorColor = new Cesium.CallbackProperty(function(time, result) {
+  return Cesium.Color.AQUAMARINE.withAlpha(alphaOptions.sensor);
+}, false);
+var groundColor = new Cesium.CallbackProperty(function(time, result) {
+  return Cesium.Color.MEDIUMORCHID.withAlpha(alphaOptions.ground);
+}, false);
+var targetColor = new Cesium.CallbackProperty(function(time, result) {
+  return Cesium.Color.CORAL.withAlpha(alphaOptions.target);
+}, false);
+var skyColor = new Cesium.CallbackProperty(function(time, result) {
+  return Cesium.Color.RED.withAlpha(alphaOptions.sky);
+}, false);
+
+const canvas = document.getElementById('canvas'),
+context = canvas.getContext('2d');
+const IMG_SRC = "https://images.unsplash.com/photo-1553158399-3796bdbc82fd?";
+function make_base() {
+  var base_image = new Image();
+  base_image.src = IMG_SRC;
+  base_image.crossOrigin = "Anonymous";
+  base_image.onload = function(){
+    context.drawImage(base_image, 0, 0);
+  };
+}
+
+
+
+/*************************
+
+Middle-Click functions
+
+*************************/
+
+var handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+handler.setInputAction(function () {
+  progressBar.style.display = "block";
+  var start = performance.now();
+  switch (currMode) {
+    case 0:
+      break;
+    case 1:
+      sensorAction();
+      break;
+    case 2:
+      targetAction();
+      break;
+    default:
+      break;
+  }
+  var end = performance.now();
+  console.log(end-start);
+  progressBar.style.display = "none";
+}, Cesium.ScreenSpaceEventType.MIDDLE_CLICK);
+
+function targetAction() {
+  try {
+    // make sure that the target rests on the terrain
+    var positions = [Cesium.Cartographic.fromCartesian(globePick)];
+    var samplePromise = Cesium.sampleTerrainMostDetailed(viewer.terrainProvider, positions);
+    Cesium.when(samplePromise, function(updatedPositions) {
+      var target = viewer.entities.add({
+        name: ("Target " + targetArray.length),
+        position: Cesium.Cartographic.toCartesian(updatedPositions[0]),
+        point: {
+          pixelSize: 10,
+          color: targetColor,
+        },
+        show: true,
+      });
+    targetArray.push(target);
+    });
+  } catch(err) {
+    // check if user clicked off the globe
+    console.log(err);
+  }
+}
+
+function sensorAction() {
+  var data_source = viewer.dataSources.get(0);
+  
+  data_source.update(Cesium.Clock.currentTime);
+
+  //Get the array of entities
+  var entities = data_source.entities;
+  var sensor = entities.getById(
+    "Aircraft/Builder_Aircraft/Sensor/Colletion_Sensor"
+  );
+  
+  if(viewer.clockViewModel.multiplier === 0.0){
+    viewer.clockViewModel.multiplier = 6;
+    viewer.clockViewModel.clock.canAnimate = true;
+  }
+  
+  if(viewer.clockViewModel.multiplier === 0.0){
+    viewer.clockViewModel.multiplier = 6;
+    viewer.clockViewModel.clock.canAnimate = true;
+  }
+  
+  var fpCollection = new Cesium.EntityCollection();
+  
+  if (SQUARE_OR_SCAN) {
+    cast_square(fpCollection);
+  } else {
+    cast_scan(fpCollection);
+  }
+  
+  fpArray.push(fpCollection);
+
+  viewer.clockViewModel.multiplier *= 0;
+  //viewer.clockViewModel.clock.canAnimate = false;
+}
+
+function cast_square(fpCollection) {
+  // CREATE SQUARE FOOTPRINT
+  var G = create_footprint(fpCollection); //G for GRID
+
+  // draw lines on left and bottom edges
+  for(var i_1 = 0; i_1 < HEIGHT-1; i_1++){
+    ground_line(G[i_1][0], G[i_1+1][0]);
+  }
+
+  for(var j_1 = 0; j_1 < WIDTH-1; j_1++){
+    ground_line(G[0][j_1], G[0][j_1+1]);
+  }
+
+  // fill in grid with lines and pixels
+  for(var k = 1; k < HEIGHT; k++){
+    for(var l = 1; l < WIDTH; l++){
+      var pixel = context.getImageData(k*10, l*10, 1, 1);
+      var data = pixel.data;
+      var ground_color = new Cesium.Color();
+
+      // read color data
+      Cesium.Color.fromBytes(data[0], data[1], data[2], 255, ground_color);
+
+      var pt = G[k][l];
+      var o_1 = G[k-1][l];
+      var o_2 = G[k][l-1];
+      var o_3 = G[k-1][l-1];
+
+      var col = ground_color;
+      var edge1_size = Cesium.Cartesian3.distance(pt, o_1);
+      var edge2_size = Cesium.Cartesian3.distance(pt, o_2);
+      var edge3_size = Cesium.Cartesian3.distance(pt, o_3);
+
+      // if a pixel is elongated, don't draw it.
+      if(edge1_size > MAX_DIST || edge2_size > MAX_DIST || edge3_size > MAX_DIST*1.3){
+        col = col.withAlpha(0.0);
+      }
+
+      viewer.entities.add({
+        polygon: {
+          hierarchy: [pt, o_1, o_3, o_2],
+          material: col,
+        },
+      });
+      incProgress();
+      ground_line(pt, o_1);
+      ground_line(pt, o_2);
+    }
+  }
+}
+
+function cast_scan(fpCollection) {
+  
+  for(var j = 0; j < SLICES; j++){
+    for(var i = 0; i < MAX_ANGLE; i += (MAX_ANGLE/ANGLES)){
+      
+      var isMiddle = (j === (SLICES/2) && i === 0);
+      
+      var shoot_dir = new Cesium.Cartesian3(
+        SENSOR_DIR.x, 
+        SENSOR_DIR.y - i, 
+        SENSOR_DIR.z + (i*0.8)
+      );
+      
+      shoot_ray(shoot_dir, fpCollection, isMiddle);      
+    }
+    
+    Cesium.JulianDate.addSeconds(
+      viewer.clockViewModel.currentTime, 
+      0.04, 
+      viewer.clockViewModel.currentTime
+    );
+  }
+}
+
+function shoot_ray(cart3, fpCollection, isMiddle){
+  var sky_pos = get_pos();
+  var ray = new Cesium.Ray(sky_pos, cart3);
+  var earth_pos = viewer.scene.globe.pick(ray, viewer.scene, earth_pos);
+  
+  if(Cesium.defined(sky_pos)){
+    var skyPt = viewer.entities.add({
+          position: sky_pos,
+          point: {
+            color: skyColor,
+            outlineColor: skyColor,
+            pixelSize: 5,
+            heightReference: Cesium.HeightReference.NONE,
+            //heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          },
+    });
+    incProgress();
+  }
+  
+  if(Cesium.defined(earth_pos)){
+    var earthPt = viewer.entities.add({
+          position: earth_pos,
+          point: {
+            color: groundColor,
+            pixelSize: 5,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          },
+        });
+    incProgress();
+    
+    fpCollection.add(earthPt);
+  }
+  
+  if(Cesium.defined(sky_pos) && Cesium.defined(earth_pos)){
+    var sensPt = viewer.entities.add(
+      {
+        polyline: {
+          positions: [earth_pos, sky_pos],
+          material:  new Cesium.ColorMaterialProperty(sensorColor),
+          width: 2,
+          clampToGround: false,
+        }
+      });
+    incProgress();
+    
+    if (isMiddle) {
+      var skyPointer = new Cesium.Ray(sky_pos, earth_pos);
+      sensorArray.push(skyPointer);
+    }
+  }
+  
+  return earth_pos;
+}
+
+function create_footprint(fpCollection){
+  // Create one dimensional array 
+  var footprint = new Array(WIDTH); 
+
+  // Loop to create 2D array using 1D array 
+  for (var a = 0; a < footprint.length; a++) { 
+      footprint[a] = new Array(HEIGHT); 
+  }
+  
+  for(var i = 0; i < WIDTH; i++){
+    for(var j = 0; j < HEIGHT; j++){
+      var isMiddle = (i === (WIDTH/2) && j === 0);
+    
+      var X = j*W_ANGLE/WIDTH;
+      var Y = i*H_ANGLE/HEIGHT;
+      
+      var shoot_dir = new Cesium.Cartesian3(
+        SENSOR_DIR.x + (X * 1.0) + (Y * 0.0),
+        SENSOR_DIR.y + (X * 0.0) + (Y * 0.7),
+        SENSOR_DIR.z + (X * 0.0) + (Y * 0.7)
+      );
+      var ground_point = shoot_ray(shoot_dir, fpCollection, isMiddle);
+      footprint[i][j] = ground_point;
+    }
+  }
+  
+  return footprint;
+}
+                       
+function ground_line(p1, p2){
+   viewer.entities.add(
+      {
+        polyline: {
+          positions: [p1, p2],
+          material: new Cesium.ColorMaterialProperty(gridColor),
+          width: 2,
+          clampToGround: false,
+        }
+      }
+   );
+  incProgress();
+}
+
+function get_pos(){
+  var new_time = Cesium.JulianDate.secondsDifference(
+    viewer.clock.currentTime, viewer.clock.startTime);
+  var span = Cesium.JulianDate.secondsDifference(
+    viewer.clock.stopTime, viewer.clock.startTime); 
+  var proportion = -new_time/span;
+  
+  var x1 = START.x;
+  var y1 = START.y;
+  var z1 = START.z;
+  
+  var x2 = END.x;
+  var y2 = END.y;
+  var z2 = END.z;
+  
+  var x3 = x1+((x1-x2)*proportion);
+  var y3 = y1+((y1-y2)*proportion);
+  var z3 = z1+((z1-z2)*proportion);
+  
+  return new Cesium.Cartesian3(x3,y3,z3);
+}
+
+
+
+/*************************
+
+View Model functions
+
+*************************/
+
+// Global variables
+const knockout = Cesium.knockout;
+var camera = viewer.camera;
+
+var fpArray = [];  // footprint EntityCollections
+var sensorArray = [];  // central sensor Rays
+var targetArray = [];  // target Entities
+
+const returnBtn = document.getElementById("returnBtn");
+var toolbar = document.getElementById("toolbar");
+var progressBar = document.getElementById("progBar");
+
+// Mode options
+const modeOptions = {
+  0: ["Preview Mode", "Preview the current scene"],
+  1: ["Sensor Mode", "Middle-click to place a footprint"],
+  2: ["Target Mode", "Middle-click to place your target"],
+};
+var currMode = 1;
+
+// Menu options --> menuId: id
+const menuOptions = {
+  0: "menuOptions",
+  1: "viewOptions",
+  2: "modeOptions",
+  3: "appearanceOptions",
+};
+
+// View options
+const viewOptions = {
+  0: "Aircraft View",
+  1: "Overhead Footprint View",
+  2: "Sensor Footprint View",
+  3: "Scene View",
+  4: "Overhead Target View",
+  5: "Ground Target View",
+};
+var currView = 3;
+
+var viewModel = {
+  gridAlpha: alphaOptions.grid,
+  sensorAlpha: alphaOptions.sensor,
+  groundAlpha: alphaOptions.ground,
+  targetAlpha: alphaOptions.target,
+  skyAlpha: alphaOptions.sky,
+  modeOptions: modeOptions,
+  menuOptions: menuOptions,
+  viewOptions: viewOptions,
+  currMode: currMode,
+  currView: currView,
+  currFp: 0,
+  currTgt: 0,
+  restart: function(vm, event) {
+    clearEntities();
+    resetView();
+    init();
+  },
+  switchMode: function(vm, event) {
+    switchMode(parseInt(event.target.value));
+  },
+  switchMenu: function(vm, event) {
+    switchMenu(event.target.value);
+  },
+  updateView: function(vm, event) {
+    updateView(parseInt(event.target.value));
+  },
+  scrollFp: function(vm, event) {
+    scrollFp(parseInt(event.target.value));
+  },
+  scrollTgt: function(vm, event) {
+    scrollTgt(parseInt(event.target.value));
+  },
+};
+
+knockout.track(viewModel);
+knockout.applyBindings(viewModel, toolbar);
+knockout.getObservable(viewModel, "currMode")
+  .subscribe(function(newModeId) {
+    switchMode(parseInt(newModeId));
+  });
+knockout.getObservable(viewModel, "gridAlpha")
+  .subscribe(updateAppearances);
+knockout.getObservable(viewModel, "sensorAlpha")
+  .subscribe(updateAppearances);
+knockout.getObservable(viewModel, "groundAlpha")
+  .subscribe(updateAppearances);
+knockout.getObservable(viewModel, "targetAlpha")
+  .subscribe(updateAppearances);
+knockout.getObservable(viewModel, "skyAlpha")
+  .subscribe(updateAppearances);
+
+function switchMode(modeId) {
+  currMode = modeId;
+  viewModel.currMode = modeId;
+}
+
+function switchMenu(menuId) {
+  for (var option in menuOptions) {
+    var menu = document.getElementById(menuOptions[option]);
+    if (option === menuId) {
+      menu.style.display = "block";
+    } else {
+      menu.style.display = "none";
+    }
+  }
+  
+  if (menuId === "0") {
+    returnBtn.style.display = "none";
+  } else {
+    returnBtn.style.display = "block";
+  }
+}
+
+function scrollFp(dir) {
+  var count = fpArray.length;
+  if (count > 1) {
+    var newFp = viewModel.currFp + dir;
+    if (newFp >= count) {
+      newFp -= count;
+    } else if (newFp < 0) {
+      newFp += count;
+    }
+    viewModel.currFp = newFp;
+    updateView(viewModel.currView);
+  }
+}
+
+function scrollTgt(dir) {
+  var count = targetArray.length;
+  if (count > 1) {
+    var newTgt = viewModel.currTgt + dir;
+    if (newTgt >= count) {
+      newTgt -= count;
+    } else if (newTgt < 0) {
+      newTgt += count;
+    }
+    viewModel.currTgt = newTgt;
+    updateView(viewModel.currView);
+  }
+}
+
+function updateView(view) {
+  //view is an integer
+  currView = view;
+  viewModel.currView = view;
+  
+  var ds = viewer.dataSources.get(0);
+  var pos = new Cesium.Cartesian3();
+  var dir = new Cesium.Cartesian3();
+  
+  switch (view) {
+    case 0:  // aircraft view
+      viewer.flyTo(ds);
+      break;
+    case 1:  // overhead fp view
+      if (fpArray.length > 0) {
+        viewer.flyTo(fpArray[viewModel.currFp]);
+      }
+      break;
+    case 2:  // sensor fp view
+      if (sensorArray.length > 0) {        
+        camera.flyTo({
+          destination: sensorArray[viewModel.currFp].origin,
+          orientation: {
+            heading: CAM_HD,
+            pitch: CAM_PITCH,
+            roll: 0.0,
+          }
+        });
+      }
+      break;
+    case 3:  // scene view
+      camera.flyTo({
+        destination: CAM_POS,
+        orientation: {
+          direction: CAM_DIR,
+          up: CAM_UP,
+        }
+      });
+      break;
+    case 4:  // overhead tgt view
+      if (targetArray.length > 0) {
+        viewer.flyTo(targetArray[viewModel.currTgt]);
+      }
+      break;
+    case 5:  // ground tgt view
+      if (targetArray.length > 0) {
+        camera.flyTo({
+          destination: targetArray[viewModel.currTgt]
+            .position.getValue(viewer.clock.currentTime),
+          orientation: {
+            heading: CAM_HD + PI,
+            pitch: -CAM_PITCH,
+            roll: 0.0,
+          }
+        });
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+function updateAppearances() {
+  alphaOptions.grid = parseFloat(viewModel.gridAlpha);
+  alphaOptions.sensor = parseFloat(viewModel.sensorAlpha);
+  alphaOptions.ground = parseFloat(viewModel.groundAlpha);
+  alphaOptions.target = parseFloat(viewModel.targetAlpha);
+  alphaOptions.sky = parseFloat(viewModel.skyAlpha);
+}
+
+function resetView() {
+  viewModel.currFp = 0;
+  viewModel.currTgt = 0;
+  
+  camPointer = viewer.entities.add({
+    position: camUpdate,
+    point: {
+      pixelSize: 10,
+    },
+    show: true,
+  });
+}
+
+function clearEntities() {
+  viewer.entities.removeAll();
+  fpArray = [];
+  sensorArray = [];
+  targetArray = [];
+  
+  viewer.dataSources.removeAll();
+}
+
+function incProgress() {
+  var pct = ((viewer.entities.values.length - 1) / EPS) * 100;
+  progressBar.value = pct;
+  //console.log(pct);
+}
+
+
+
+/*************************
+
+Begin Program
+
+*************************/
+
+init();
+//Sandcastle_End
+    Sandcastle.finishedLoading();
+}
+if (typeof Cesium !== 'undefined') {
+    window.startupCalled = true;
+    startup(Cesium);
+}
+</script>
+</body>
+</html>
